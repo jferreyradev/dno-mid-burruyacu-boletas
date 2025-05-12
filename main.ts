@@ -1,3 +1,8 @@
+import { Hono } from "https://deno.land/x/hono@v3.4.1/mod.ts";
+import { cors } from "https://deno.land/x/hono/middleware.ts";
+
+const app = new Hono();
+
 async function verifyIP() {
   const URL = "https://josrferreyr-apiserverde-79.deno.dev/items/\"Burruyacu";
   const resp = await fetch(URL, {
@@ -9,119 +14,271 @@ async function verifyIP() {
   console.log(obj.value.ip);
   return obj.value.ip || null;
 }
+//const URL_API = "http://www.servertafiviejo.duckdns.org:3007";
+const PUBLIC_IP = await verifyIP()
+const URL_API = `http://${PUBLIC_IP}:3003`;
 
-async function handler(req: Request): Promise<Response> {
-  const PUBLIC_IP = await verifyIP();
+// Usar el middleware de CORS
+app.use('*', cors({
+  origin: '*',  // Permitir cualquier origen
+  methods: ['GET', 'POST', 'OPTIONS'],  // Permitir estos métodos
+  headers: ['Content-Type']  // Permitir estos encabezados
+}));
 
-  if (PUBLIC_IP) {
-    const MID_API = new URLPattern({ pathname: "/api/:action/:en/*?" });
-    const MID_API_BOLETA = new URLPattern({ pathname: "/api/boleta*?" });
-
-    const URL_API = `http://${PUBLIC_IP}:3003`;
-
-    const match1 = MID_API_BOLETA.exec(req.url);
-
-    if (match1) {
-      try {
-        const URL =
-          URL_API +
-          match1.pathname.input +
-          (match1.search.input ? "?" + match1.search.input : "");
-
-        const resp = await fetch(URL, {
-          headers: {
-            accept: "application/pdf",
-          },
-        });
-
-        const fn = resp.headers.get("content-disposition");
-
-        //console.log(fn.split("=")[1])
-
-        return new Response(resp.body, {
-          status: 200,
-          headers: {
-            "Access-Control-Allow-Origin": "*",
-            "content-type": "application/pdf",
-            "Content-Disposition":
-              "attachment; filename = " + fn.split("=")[1] + ".pdf",
-          },
-        });
-      } catch (error) {
-        return new Response(error, {
-          status: 404,
-        });
-      }
+app.get("/config", async (c) => {
+  const res = await fetch(`${URL_API}/api/view/configServer`,  {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
     }
+  })
+  const jsonData = await res.json();
+  //console.log(jsonData)
+  return c.json(jsonData)  
+});
 
-    const match = MID_API.exec(req.url);
-
-    if (match) {
-      let URL = "";
-      let option = {};
-      let content = "application/json";
-
-      try {
-        if (match.pathname.groups.action == "view") {
-          URL =
-            URL_API +
-            match.pathname.input +
-            (match.search.input ? "?" + match.search.input : "");
-
-          option = {
-            headers: {
-              accept: "application/json",
-            },
-          };
-        } else if (match.pathname.groups.action == "en") {
-          URL =
-            URL_API +
-            "/api/" +
-            match.pathname.groups.en +
-            (match.search.input ? "?" + match.search.input : "");
-
-          option = {
-            headers: {
-              accept: "application/json",
-            },
-          };
-        } else if (match.pathname.groups.action == "txt") {
-          URL =
-            URL_API +
-            match.pathname.input +
-            (match.search.input ? "?" + match.search.input : "");
-
-          content = "text/plain";
-        }
-
-        /*
-      console.log("fetch to: " + URL);
-      console.log("match to: " + match.pathname.groups.action);
-      console.log("match to: " + match.pathname.groups.en);
-      console.log(match.pathname);
-
-      /*** */
-
-        const resp = await fetch(URL, option);
-
-        return new Response(resp.body, {
-          status: 200,
-          headers: {
-            "Access-Control-Allow-Origin": "*",
-            "content-type": content,
-          },
-        });
-      } catch (error) {
-        return new Response(error, {
-          status: 404,
-        });
-      }
+app.get("/list", async (c) => {
+  const res = await fetch(`${URL_API}/api/view/list`,  {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
     }
+  })
+  const jsonData = await res.json();
+  //console.log(jsonData)
+  return c.json(jsonData)  
+});
 
-    return new Response("Not found path", {
-      status: 404,
-    });
-  }
-}
+app.get("/users", async (c) => {
+  const res = await fetch(`${URL_API}/api/view/users`,  {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  const jsonData = await res.json();
+  //console.log(jsonData)
+  return c.json(jsonData)  
+});
 
-Deno.serve(handler);
+app.get("/user/:dni", async (c) => {
+  const dni = c.req.param('dni')
+  const res = await fetch(`${URL_API}/api/view/users?DNI=${dni}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  const jsonData = await res.json();
+  //console.log(jsonData)
+  return c.json(jsonData)  
+});
+
+app.get("/personas", async (c) => {
+  const res = await fetch(`${URL_API}/api/view/personaLista`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  const jsonData = await res.json();
+  //console.log(jsonData)
+  return c.json(jsonData)  
+});
+
+app.get("/persona/:dni", async (c) => {
+  const dni = c.req.param('dni')
+  const res = await fetch(`${URL_API}/api/view/personaLista?Documento=${dni}`,  {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  const jsonData = await res.json();
+  //console.log(jsonData)
+  return c.json(jsonData)  
+});
+
+app.get("/cargo/:persId", async (c) => {
+  const persId = c.req.param('persId')
+  const res = await fetch(`${URL_API}/api/view/cargo?PersonaId=${persId}`,  {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  const jsonData = await res.json();
+  //console.log(jsonData)
+  return c.json(jsonData)  
+});
+
+app.get("/personacargo/:dni", async (c) => {
+  const dni = c.req.param('dni')
+  const res = await fetch(`${URL_API}/api/view/cargo?PersonaDocumento=${dni}`,  {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  const jsonData = await res.json();
+  //console.log(jsonData)
+  return c.json(jsonData)  
+});
+
+app.get("/personacargo/:dni/:orden", async (c) => {
+  const dni = c.req.param('dni')
+  const orden = c.req.parm('orden')
+  const res = await fetch(`${URL_API}/api/view/cargo?PersonaDocumento=${dni}&Orden=${orden}`,  {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  const jsonData = await res.json();
+  //console.log(jsonData)
+  return c.json(jsonData)  
+});
+
+/*
+app.get("/boleta/:idLiq", async (c) => {
+  const idLiq = c.req.param('idLiq')
+  const res = await fetch(`${URL_API}/api/boleta?IdLiq=${idLiq}`,  {
+    method: 'GET',
+    headers: {
+          accept: "application/pdf",
+        },
+  })
+
+  const fn = res.headers.get('content-disposition')
+
+  c.res.headers.append("Access-Control-Allow-Origin","*")
+  c.res.headers.append("content-type", "application/pdf")
+  c.res.headers.append("Content-Disposition","attachment; filename = " + fn.split("=")[1] + ".pdf")
+
+  return c.res
+  
+  //const jsonData = await res.json();
+  //console.log(jsonData)
+  //return c.json(jsonData)  
+});
+*/
+
+app.get("/boletas/:dni", async (c) => {
+  const dni = c.req.param('dni')
+  const res = await fetch(`${URL_API}/api/view/boletas?Documento=${dni}&sort={"Periodo":"desc","Fechadev":"desc"}`,  {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  const jsonData = await res.json();
+  //console.log(jsonData)
+  return c.json(jsonData)  
+});
+
+app.post("/log", async (c) =>{
+  
+  const post = await c.req.json()
+
+  const res = await fetch(`${URL_API}/api/sp/nuevoLog`, {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+    },
+    body: JSON.stringify(post)
+  })
+
+  const jsonData = await res.json();
+  //console.log(jsonData)
+  return jsonData
+});
+
+app.post("/user", async (c) =>{
+
+  const post = await c.req.json()
+
+  const res = await fetch(`${URL_API}/api/sp/nuevoUsuario`, {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+    },
+    body: JSON.stringify(post)
+  })
+
+  const jsonData = await res.json();
+  return jsonData
+});
+
+app.post("/estadoBoleta", async (c) =>{
+
+  const post = await c.req.json()
+
+  const res = await fetch(`${URL_API}/api/sp/estadoBoleta`, {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+    },
+    body: JSON.stringify(post)
+  })
+
+  const jsonData = await res.json();
+  return jsonData
+});
+
+app.post("/estadoUsuario", async (c) =>{
+
+  const post = await c.req.json()
+
+  const res = await fetch(`${URL_API}/api/sp/setEstadoUsuario`, {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+    },
+    body: JSON.stringify(post)
+  })
+
+  const jsonData = await res.json();
+  return jsonData
+});
+
+app.post("/claveUsuario", async (c) =>{
+  const post = await c.req.json()
+  const res = await fetch(`${URL_API}/api/sp/setClaveUsuario`, {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+    },
+    body: JSON.stringify(post)
+  })
+  const jsonData = await res.json(); 
+  return c.json(jsonData)
+});
+
+app.get("/sp/list", async (c) => {
+  const res = await fetch(`${URL_API}/api/sp/list`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  const jsonData = await res.json();
+  return c.json(jsonData);
+});
+
+app.post("/sp/:spname", async (c) => {
+  const post = await c.req.json();
+  const spName = c.req.param('spname')
+  const res = await fetch(`${URL_API}/api/sp/${spName}`,
+    {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(post),
+      }
+  );
+  const jsonData = await res.json();
+  return c.json(jsonData);
+});
+
+Deno.serve(app.fetch);

@@ -101,7 +101,7 @@ app.get("/persona/:dni", async (c) => {
 
 app.get("/cargo/:persId", async (c) => {
   const persId = c.req.param('persId')
-  const res = await fetch(`${URL_API}/api/view/cargo?PersonaId=${persId}`,  {
+  const res = await fetch(`${URL_API}/api/view/cargo?PersonaId=${persId}&TipoLiquidacionId=1&EstadoCargoId=1`,  {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json'
@@ -114,7 +114,7 @@ app.get("/cargo/:persId", async (c) => {
 
 app.get("/personacargo/:dni", async (c) => {
   const dni = c.req.param('dni')
-  const res = await fetch(`${URL_API}/api/view/cargo?PersonaDocumento=${dni}`,  {
+  const res = await fetch(`${URL_API}/api/view/cargo?PersonaDocumento=${dni}&TipoLiquidacionId=1&EstadoCargoId=1`,  {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json'
@@ -128,7 +128,7 @@ app.get("/personacargo/:dni", async (c) => {
 app.get("/personacargo/:dni/:orden", async (c) => {
   const dni = c.req.param('dni')
   const orden = c.req.parm('orden')
-  const res = await fetch(`${URL_API}/api/view/cargo?PersonaDocumento=${dni}&Orden=${orden}`,  {
+  const res = await fetch(`${URL_API}/api/view/cargo?PersonaDocumento=${dni}&Orden=${orden}&TipoLiquidacionId=1&EstadoCargoId=1`,  {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json'
